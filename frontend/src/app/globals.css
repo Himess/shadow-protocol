@@ -1,0 +1,263 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --background: #0A0A0A;
+  --card: #141414;
+  --card-hover: #1a1a1a;
+  --border: #2a2a2a;
+  --gold: #F7B731;
+  --success: #10B981;
+  --danger: #EF4444;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0A0;
+  --text-muted: #6B7280;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--card);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Utility Classes */
+@layer components {
+  .card {
+    @apply bg-card border border-border rounded-xl p-4;
+  }
+
+  .card-hover {
+    @apply bg-card border border-border rounded-xl p-4 transition-all duration-200 hover:border-gold/50 hover:shadow-gold-glow-sm;
+  }
+
+  .btn-primary {
+    @apply bg-gold text-background font-semibold px-6 py-3 rounded-lg transition-all duration-200 hover:shadow-gold-glow active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent border border-border text-text-primary font-medium px-6 py-3 rounded-lg transition-all duration-200 hover:border-gold hover:text-gold;
+  }
+
+  .btn-success {
+    @apply bg-success text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 hover:shadow-success-glow active:scale-95;
+  }
+
+  .btn-danger {
+    @apply bg-danger text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 hover:shadow-danger-glow active:scale-95;
+  }
+
+  .btn-long {
+    @apply bg-success/20 border border-success text-success font-semibold px-6 py-3 rounded-lg transition-all duration-200 hover:bg-success hover:text-white;
+  }
+
+  .btn-short {
+    @apply bg-danger/20 border border-danger text-danger font-semibold px-6 py-3 rounded-lg transition-all duration-200 hover:bg-danger hover:text-white;
+  }
+
+  .input-field {
+    @apply w-full bg-background border border-border rounded-lg px-4 py-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/30 transition-all duration-200;
+  }
+
+  .input-field::-webkit-outer-spin-button,
+  .input-field::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .input-field[type=number] {
+    -moz-appearance: textfield;
+  }
+
+  .input-field-active {
+    @apply w-full bg-background border-2 border-gold rounded-lg px-4 py-3 text-text-primary;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-success/20 text-success;
+  }
+
+  .badge-danger {
+    @apply badge bg-danger/20 text-danger;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning/20 text-warning;
+  }
+
+  .badge-info {
+    @apply badge bg-info/20 text-info;
+  }
+
+  .badge-gold {
+    @apply badge bg-gold/20 text-gold;
+  }
+
+  .badge-encrypted {
+    @apply badge bg-gold/10 text-gold border border-gold/30;
+  }
+
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gold-gradient;
+  }
+
+  /* Encrypted Data Style */
+  .encrypted-value {
+    @apply font-mono text-text-muted tracking-wider;
+  }
+
+  .revealed-value {
+    @apply font-mono text-success;
+  }
+
+  /* Loading skeleton */
+  .skeleton {
+    @apply bg-card-hover rounded animate-pulse;
+  }
+}
+
+/* Animation for encrypted text shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.encrypted-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--text-muted) 25%,
+    var(--gold) 50%,
+    var(--text-muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Pulse animation for loading */
+@keyframes pulse-gold {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse-gold {
+  animation: pulse-gold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Slide in animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.2s ease-out;
+}
+
+/* Scale animation for buttons */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+/* Glow effect */
+.glow-gold {
+  box-shadow: 0 0 20px rgba(247, 183, 49, 0.3);
+}
+
+.glow-success {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.glow-danger {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+/* Rainbow Kit Custom Styles */
+[data-rk] button {
+  font-family: 'Inter', system-ui, sans-serif !important;
+}
+
+/* Table row hover */
+.table-row-hover {
+  @apply transition-colors duration-150;
+}
+
+.table-row-hover:hover {
+  background-color: var(--card-hover);
+}
