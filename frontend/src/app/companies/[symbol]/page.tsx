@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   ArrowUp,
   ArrowDown,
-  ExternalLink,
   TrendingUp,
   Building2,
   DollarSign,
@@ -74,8 +73,19 @@ export default function CompanyDetailPage() {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
             {/* Left Side */}
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-xl bg-background border border-border flex items-center justify-center text-3xl">
-                {categoryIcons[company.category]}
+              <div className="w-16 h-16 rounded-xl bg-background border border-border flex items-center justify-center overflow-hidden">
+                {company.logo ? (
+                  <img
+                    src={company.logo}
+                    alt={company.name}
+                    className="w-full h-full object-contain p-2"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <span className={company.logo ? 'hidden' : 'text-3xl'}>{categoryIcons[company.category]}</span>
               </div>
               <div>
                 <div className="flex items-center gap-3 mb-1">
@@ -161,40 +171,46 @@ export default function CompanyDetailPage() {
           <h2 className="text-xl font-bold mb-4 text-text-primary">About {company.name}</h2>
           <p className="text-text-muted mb-4">{company.description}</p>
 
-          {/* TODO Placeholder */}
-          <div className="bg-background border border-dashed border-border rounded-lg p-6 mt-4">
-            <p className="text-text-muted text-center">
-              More company details coming soon...
-              <br />
-              <span className="text-sm">
-                (Founded year, HQ location, employee count, funding history, revenue, etc.)
-              </span>
-            </p>
+          {/* Company Details Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+            <div className="bg-background border border-border rounded-lg p-4">
+              <p className="text-text-muted text-xs mb-1">Founded</p>
+              <p className="text-text-primary font-bold">{company.founded}</p>
+            </div>
+            <div className="bg-background border border-border rounded-lg p-4">
+              <p className="text-text-muted text-xs mb-1">Headquarters</p>
+              <p className="text-text-primary font-bold text-sm">{company.hq}</p>
+            </div>
+            <div className="bg-background border border-border rounded-lg p-4">
+              <p className="text-text-muted text-xs mb-1">CEO</p>
+              <p className="text-text-primary font-bold text-sm">{company.ceo}</p>
+            </div>
+            <div className="bg-background border border-border rounded-lg p-4">
+              <p className="text-text-muted text-xs mb-1">Employees</p>
+              <p className="text-text-primary font-bold">{company.employees}</p>
+            </div>
           </div>
 
-          {/* Placeholder Links */}
-          <div className="flex gap-4 mt-6">
-            <button
-              disabled
-              className="flex items-center gap-2 px-4 py-2 bg-background border border-border text-text-muted rounded-lg cursor-not-allowed opacity-50"
+          {/* Links */}
+          <div className="flex flex-wrap gap-4 mt-6">
+            <a
+              href={`https://${company.website}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 bg-background border border-border text-text-muted rounded-lg hover:text-gold hover:border-gold/30 transition-colors"
             >
               <Globe className="w-4 h-4" />
-              Website
-            </button>
-            <button
-              disabled
-              className="flex items-center gap-2 px-4 py-2 bg-background border border-border text-text-muted rounded-lg cursor-not-allowed opacity-50"
+              {company.website}
+            </a>
+            <a
+              href={`https://twitter.com/${company.website.replace('.com', '').replace('.ai', '').replace('.io', '').replace('.net', '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 bg-background border border-border text-text-muted rounded-lg hover:text-gold hover:border-gold/30 transition-colors"
             >
               <Twitter className="w-4 h-4" />
               Twitter
-            </button>
-            <button
-              disabled
-              className="flex items-center gap-2 px-4 py-2 bg-background border border-border text-text-muted rounded-lg cursor-not-allowed opacity-50"
-            >
-              <ExternalLink className="w-4 h-4" />
-              More Info
-            </button>
+            </a>
           </div>
         </div>
 
@@ -232,8 +248,16 @@ export default function CompanyDetailPage() {
                   className="card-hover"
                 >
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center text-xl">
-                      {categoryIcons[similar.category]}
+                    <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center overflow-hidden">
+                      {similar.logo ? (
+                        <img
+                          src={similar.logo}
+                          alt={similar.name}
+                          className="w-full h-full object-contain p-1"
+                        />
+                      ) : (
+                        <span className="text-xl">{categoryIcons[similar.category]}</span>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-bold text-text-primary">{similar.name}</h3>

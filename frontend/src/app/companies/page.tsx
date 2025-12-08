@@ -20,12 +20,6 @@ const allCategories: CompanyCategory[] = [
   'FINTECH',
   'DATA',
   'SOCIAL',
-  'DEFENSE',
-  'CRYPTO',
-  'CLOUD',
-  'DESIGN',
-  'ROBOTICS',
-  'BIOTECH',
 ];
 
 export default function CompaniesPage() {
@@ -139,8 +133,19 @@ function CompanyCard({ company }: { company: Company }) {
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center text-xl">
-              {categoryIcons[company.category]}
+            <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center overflow-hidden">
+              {company.logo ? (
+                <img
+                  src={company.logo}
+                  alt={company.name}
+                  className="w-full h-full object-contain p-1"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              <span className={company.logo ? 'hidden' : 'text-xl'}>{categoryIcons[company.category]}</span>
             </div>
             <div>
               <div className="flex items-center gap-2">

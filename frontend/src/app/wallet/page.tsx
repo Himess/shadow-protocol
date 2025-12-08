@@ -497,9 +497,9 @@ export default function WalletPage() {
                     2
                   </div>
                   <div>
-                    <h4 className="font-medium text-text-primary mb-1">Generate Proof</h4>
+                    <h4 className="font-medium text-text-primary mb-1">Verify On-Chain</h4>
                     <p className="text-sm text-text-muted">
-                      A zero-knowledge proof ensures you have sufficient balance without revealing it.
+                      The FHE contract verifies you have sufficient balance using encrypted computation.
                     </p>
                   </div>
                 </div>
