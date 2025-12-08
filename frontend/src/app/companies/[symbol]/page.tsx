@@ -2,6 +2,8 @@
 
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { Header } from '@/components';
+import { cn } from '@/lib/utils';
 import {
   ArrowLeft,
   ArrowUp,
@@ -13,12 +15,13 @@ import {
   BarChart3,
   Globe,
   Twitter,
+  Lock,
+  Shield,
 } from 'lucide-react';
 import {
   getCompanyBySymbol,
   formatValuation,
   getRankChangeDisplay,
-  categoryColors,
   categoryIcons,
   companies,
 } from '@/lib/companyData';
@@ -30,17 +33,17 @@ export default function CompanyDetailPage() {
 
   if (!company) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Company Not Found</h1>
-          <p className="text-gray-400 mb-6">The company you&apos;re looking for doesn&apos;t exist.</p>
-          <Link
-            href="/companies"
-            className="px-6 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
-          >
-            View All Companies
-          </Link>
-        </div>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-20 px-4 md:px-6 pb-8 max-w-7xl mx-auto flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold mb-4 text-text-primary">Company Not Found</h1>
+            <p className="text-text-muted mb-6">The company you&apos;re looking for doesn&apos;t exist.</p>
+            <Link href="/companies" className="btn-primary">
+              View All Companies
+            </Link>
+          </div>
+        </main>
       </div>
     );
   }
@@ -53,39 +56,43 @@ export default function CompanyDetailPage() {
     .slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* Back Button */}
-      <div className="max-w-6xl mx-auto px-4 pt-6">
+    <div className="min-h-screen bg-background">
+      <Header />
+
+      <main className="pt-20 px-4 md:px-6 pb-8 max-w-6xl mx-auto">
+        {/* Back Button */}
         <Link
           href="/companies"
-          className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-text-muted hover:text-text-primary transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Companies
         </Link>
-      </div>
 
-      {/* Company Header */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
+        {/* Company Header */}
+        <div className="card mb-6">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
             {/* Left Side */}
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-xl bg-gray-800 flex items-center justify-center text-3xl">
+              <div className="w-16 h-16 rounded-xl bg-background border border-border flex items-center justify-center text-3xl">
                 {categoryIcons[company.category]}
               </div>
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <span className="text-gray-500 text-sm font-medium">Rank #{company.rank}</span>
-                  <div className={`flex items-center gap-1 ${rankChange.color}`}>
+                  <span className="text-text-muted text-sm font-medium">Rank #{company.rank}</span>
+                  <div className={cn("flex items-center gap-1",
+                    company.rankChange === 'NEW' ? 'text-info' :
+                    typeof company.rankChange === 'number' && company.rankChange > 0 ? 'text-success' :
+                    typeof company.rankChange === 'number' && company.rankChange < 0 ? 'text-danger' : 'text-text-muted'
+                  )}>
                     {company.rankChange === 'NEW' ? (
-                      <span className="text-xs font-bold px-2 py-1 bg-blue-500/20 rounded">NEW</span>
-                    ) : company.rankChange > 0 ? (
+                      <span className="text-xs font-bold px-2 py-1 bg-info/20 rounded">NEW</span>
+                    ) : typeof company.rankChange === 'number' && company.rankChange > 0 ? (
                       <>
                         <ArrowUp className="w-4 h-4" />
                         <span className="text-sm">{rankChange.text}</span>
                       </>
-                    ) : company.rankChange < 0 ? (
+                    ) : typeof company.rankChange === 'number' && company.rankChange < 0 ? (
                       <>
                         <ArrowDown className="w-4 h-4" />
                         <span className="text-sm">{rankChange.text}</span>
@@ -93,23 +100,19 @@ export default function CompanyDetailPage() {
                     ) : null}
                   </div>
                 </div>
-                <h1 className="text-3xl font-bold mb-2">{company.name}</h1>
-                <p className="text-gray-400">{company.description}</p>
+                <h1 className="text-3xl font-bold mb-2 text-text-primary">{company.name}</h1>
+                <p className="text-text-muted">{company.description}</p>
               </div>
             </div>
 
             {/* Right Side - Trade Button */}
             <div className="flex flex-col items-end gap-3">
-              <span
-                className={`px-4 py-2 rounded-full text-sm font-medium border ${
-                  categoryColors[company.category]
-                }`}
-              >
+              <span className="badge-gold flex items-center gap-2">
                 {categoryIcons[company.category]} {company.category}
               </span>
               <Link
                 href={`/trade?asset=${company.symbol}`}
-                className="px-8 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors font-medium flex items-center gap-2"
+                className="btn-primary flex items-center gap-2"
               >
                 <TrendingUp className="w-5 h-5" />
                 Trade {company.symbol}
@@ -117,54 +120,50 @@ export default function CompanyDetailPage() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="max-w-6xl mx-auto px-4 pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Valuation */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <div className="card">
             <div className="flex items-center gap-3 mb-3">
-              <DollarSign className="w-5 h-5 text-emerald-400" />
-              <span className="text-gray-400">Last Round Valuation</span>
+              <DollarSign className="w-5 h-5 text-gold" />
+              <span className="text-text-muted">Last Round Valuation</span>
             </div>
-            <p className="text-3xl font-bold text-emerald-400">
+            <p className="text-3xl font-bold text-gold">
               {formatValuation(company.valuationBn)}
             </p>
-            <p className="text-gray-500 text-sm mt-1">Q3 2025 Secondary Market</p>
+            <p className="text-text-muted text-sm mt-1">Q3 2025 Secondary Market</p>
           </div>
 
           {/* Rank */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <div className="card">
             <div className="flex items-center gap-3 mb-3">
-              <BarChart3 className="w-5 h-5 text-blue-400" />
-              <span className="text-gray-400">Setter 30 Rank</span>
+              <BarChart3 className="w-5 h-5 text-gold" />
+              <span className="text-text-muted">Setter 30 Rank</span>
             </div>
-            <p className="text-3xl font-bold">#{company.rank}</p>
-            <p className="text-gray-500 text-sm mt-1">of 30 companies</p>
+            <p className="text-3xl font-bold text-text-primary">#{company.rank}</p>
+            <p className="text-text-muted text-sm mt-1">of 30 companies</p>
           </div>
 
           {/* Category */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <div className="card">
             <div className="flex items-center gap-3 mb-3">
-              <Building2 className="w-5 h-5 text-purple-400" />
-              <span className="text-gray-400">Business Category</span>
+              <Building2 className="w-5 h-5 text-gold" />
+              <span className="text-text-muted">Business Category</span>
             </div>
-            <p className="text-3xl font-bold">{company.category}</p>
-            <p className="text-gray-500 text-sm mt-1">{categoryIcons[company.category]} Sector</p>
+            <p className="text-3xl font-bold text-text-primary">{company.category}</p>
+            <p className="text-text-muted text-sm mt-1">{categoryIcons[company.category]} Sector</p>
           </div>
         </div>
-      </div>
 
-      {/* About Section - TODO Placeholder */}
-      <div className="max-w-6xl mx-auto px-4 pb-8">
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-          <h2 className="text-xl font-bold mb-4">About {company.name}</h2>
-          <p className="text-gray-400 mb-4">{company.description}</p>
+        {/* About Section */}
+        <div className="card mb-6">
+          <h2 className="text-xl font-bold mb-4 text-text-primary">About {company.name}</h2>
+          <p className="text-text-muted mb-4">{company.description}</p>
 
-          {/* TODO: Add more company details */}
-          <div className="bg-gray-800/50 border border-dashed border-gray-700 rounded-lg p-6 mt-4">
-            <p className="text-gray-500 text-center">
+          {/* TODO Placeholder */}
+          <div className="bg-background border border-dashed border-border rounded-lg p-6 mt-4">
+            <p className="text-text-muted text-center">
               More company details coming soon...
               <br />
               <span className="text-sm">
@@ -177,76 +176,83 @@ export default function CompanyDetailPage() {
           <div className="flex gap-4 mt-6">
             <button
               disabled
-              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-gray-500 rounded-lg cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-background border border-border text-text-muted rounded-lg cursor-not-allowed opacity-50"
             >
               <Globe className="w-4 h-4" />
               Website
             </button>
             <button
               disabled
-              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-gray-500 rounded-lg cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-background border border-border text-text-muted rounded-lg cursor-not-allowed opacity-50"
             >
               <Twitter className="w-4 h-4" />
               Twitter
             </button>
             <button
               disabled
-              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-gray-500 rounded-lg cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-background border border-border text-text-muted rounded-lg cursor-not-allowed opacity-50"
             >
               <ExternalLink className="w-4 h-4" />
               More Info
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Trading Section */}
-      <div className="max-w-6xl mx-auto px-4 pb-8">
-        <div className="bg-gradient-to-r from-emerald-900/30 to-emerald-800/30 border border-emerald-500/30 rounded-xl p-6">
+        {/* Trading Section */}
+        <div className="bg-gold/10 border border-gold/30 rounded-xl p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h3 className="text-xl font-bold mb-1">Trade {company.name} on Shadow Protocol</h3>
-              <p className="text-gray-400">
+              <h3 className="text-xl font-bold mb-1 text-text-primary flex items-center gap-2">
+                <Lock className="w-5 h-5 text-gold" />
+                Trade {company.name} on Shadow Protocol
+              </h3>
+              <p className="text-text-muted">
                 Open encrypted leveraged positions with complete privacy
               </p>
             </div>
             <Link
               href={`/trade?asset=${company.symbol}`}
-              className="px-8 py-4 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors font-bold text-lg flex items-center justify-center gap-2"
+              className="btn-primary text-lg flex items-center justify-center gap-2"
             >
               <TrendingUp className="w-5 h-5" />
               Start Trading
             </Link>
           </div>
         </div>
-      </div>
 
-      {/* Similar Companies */}
-      {similarCompanies.length > 0 && (
-        <div className="max-w-6xl mx-auto px-4 pb-12">
-          <h2 className="text-xl font-bold mb-4">Similar Companies</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {similarCompanies.map((similar) => (
-              <Link
-                key={similar.symbol}
-                href={`/companies/${similar.symbol}`}
-                className="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-emerald-500/50 transition-all"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-xl">
-                    {categoryIcons[similar.category]}
+        {/* Similar Companies */}
+        {similarCompanies.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-xl font-bold mb-4 text-text-primary">Similar Companies</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {similarCompanies.map((similar) => (
+                <Link
+                  key={similar.symbol}
+                  href={`/companies/${similar.symbol}`}
+                  className="card-hover"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center text-xl">
+                      {categoryIcons[similar.category]}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-text-primary">{similar.name}</h3>
+                      <span className="text-text-muted text-sm">#{similar.rank}</span>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold">{similar.name}</h3>
-                    <span className="text-gray-500 text-sm">#{similar.rank}</span>
-                  </div>
-                </div>
-                <p className="text-emerald-400 font-bold">{formatValuation(similar.valuationBn)}</p>
-              </Link>
-            ))}
+                  <p className="text-gold font-bold">{formatValuation(similar.valuationBn)}</p>
+                </Link>
+              ))}
+            </div>
           </div>
+        )}
+
+        {/* Encrypted Badge */}
+        <div className="flex items-center justify-center gap-2 text-gold">
+          <Shield className="w-4 h-4" />
+          <span className="text-sm">All positions are encrypted with FHE</span>
         </div>
-      )}
+      </main>
     </div>
   );
 }
