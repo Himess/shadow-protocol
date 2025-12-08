@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Header } from "@/components";
 import { ASSETS, CATEGORIES, Asset, formatUSD, formatPercent, formatMarketCap } from "@/lib/constants";
@@ -23,6 +23,11 @@ import {
   ChevronUp,
   ChevronDown,
   ArrowUpDown,
+  Search,
+  Bookmark,
+  ChevronLeft,
+  ChevronRight,
+  X,
 } from "lucide-react";
 
 // Category icons
@@ -36,11 +41,13 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 
 // Sort types
 type SortField = "name" | "price" | "change" | "marketCap" | "volume" | "oi" | "funding" | "longRatio";
-type SortDirection = "asc" | "desc";
+type SortDirection = "asc" | "desc" | null;
+
+// Items per page
+const ITEMS_PER_PAGE = 50;
 
 // Generate mock market data with seeded randomness based on asset id
 function generateMarketData(asset: Asset) {
-  // Use asset id to generate consistent random values
   const seed = asset.id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const random = (offset: number) => {
     const x = Math.sin(seed + offset) * 10000;
@@ -64,7 +71,7 @@ const PLATFORM_STATS = {
   totalOI: 156000000,
 };
 
-// Sortable Header Component
+// Sortable Header Component with 3-click cycle
 function SortableHeader({
   field,
   label,
@@ -75,103 +82,266 @@ function SortableHeader({
 }: {
   field: SortField;
   label: string;
-  currentSort: SortField;
+  currentSort: SortField | null;
   currentDirection: SortDirection;
   onSort: (field: SortField) => void;
   className?: string;
 }) {
-  const isActive = currentSort === field;
+  const isActive = currentSort === field && currentDirection !== null;
 
   return (
     <th
       className={cn(
-        "px-6 py-4 font-medium cursor-pointer hover:bg-card-hover transition-colors select-none",
+        "px-3 py-3 font-medium cursor-pointer hover:bg-card-hover transition-colors select-none text-xs",
         className
       )}
       onClick={() => onSort(field)}
     >
       <div className="flex items-center gap-1">
-        <span>{label}</span>
+        <span className="truncate">{label}</span>
         {isActive ? (
           currentDirection === "asc" ? (
-            <ChevronUp className="w-4 h-4 text-gold" />
+            <ChevronUp className="w-3 h-3 text-gold flex-shrink-0" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-gold" />
+            <ChevronDown className="w-3 h-3 text-gold flex-shrink-0" />
           )
         ) : (
-          <ArrowUpDown className="w-3 h-3 text-text-muted opacity-50" />
+          <ArrowUpDown className="w-3 h-3 text-text-muted opacity-50 flex-shrink-0" />
         )}
       </div>
     </th>
   );
 }
 
+// Footer Component
+function Footer() {
+  return (
+    <footer className="bg-card border-t border-border mt-12">
+      {/* Top Block - Main Info */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Brand Block */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-gold/20 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-gold" />
+              </div>
+              <span className="font-bold text-lg text-text-primary">Shadow Protocol</span>
+            </div>
+            <p className="text-sm text-text-muted leading-relaxed">
+              Private leveraged trading for Pre-IPO synthetic assets.
+              Powered by Fully Homomorphic Encryption.
+            </p>
+          </div>
+
+          {/* Links Block */}
+          <div>
+            <h4 className="font-semibold text-text-primary mb-4">Protocol</h4>
+            <ul className="space-y-2 text-sm text-text-muted">
+              <li><Link href="/markets" className="hover:text-gold transition-colors">Markets</Link></li>
+              <li><Link href="/trade" className="hover:text-gold transition-colors">Trade</Link></li>
+              <li><Link href="/wallet" className="hover:text-gold transition-colors">Wallet</Link></li>
+              <li><Link href="/docs" className="hover:text-gold transition-colors">Documentation</Link></li>
+            </ul>
+          </div>
+
+          {/* Resources Block */}
+          <div>
+            <h4 className="font-semibold text-text-primary mb-4">Resources</h4>
+            <ul className="space-y-2 text-sm text-text-muted">
+              <li><a href="https://docs.zama.ai" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">Zama fhEVM Docs</a></li>
+              <li><a href="#" className="hover:text-gold transition-colors">Whitepaper</a></li>
+              <li><a href="#" className="hover:text-gold transition-colors">Security Audit</a></li>
+              <li><a href="#" className="hover:text-gold transition-colors">Bug Bounty</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-border" />
+
+      {/* Bottom Block - Copyright & Social */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-text-muted">
+            &copy; 2024 Shadow Protocol. Built for Zama Builder Track.
+          </p>
+
+          {/* Social Links */}
+          <div className="flex items-center gap-4">
+            <a
+              href="https://github.com/poppyseedDev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-muted hover:text-text-primary transition-colors"
+              aria-label="GitHub"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+            </a>
+            <a
+              href="https://x.com/AuroraHimess"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-muted hover:text-text-primary transition-colors"
+              aria-label="X (Twitter)"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 export default function MarketsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [sortField, setSortField] = useState<SortField>("marketCap");
+  const [sortField, setSortField] = useState<SortField | null>("marketCap");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
 
+  // Load bookmarks from localStorage (client-side only)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("shadow-bookmarks");
+      if (saved) {
+        try {
+          setBookmarks(new Set(JSON.parse(saved)));
+        } catch {
+          // Invalid JSON, ignore
+        }
+      }
+    }
+  }, []);
+
+  // Save bookmarks to localStorage
+  const toggleBookmark = (assetId: string) => {
+    setBookmarks(prev => {
+      const newBookmarks = new Set(prev);
+      if (newBookmarks.has(assetId)) {
+        newBookmarks.delete(assetId);
+      } else {
+        newBookmarks.add(assetId);
+      }
+      if (typeof window !== "undefined") {
+        localStorage.setItem("shadow-bookmarks", JSON.stringify(Array.from(newBookmarks)));
+      }
+      return newBookmarks;
+    });
+  };
+
+  // 3-click sorting: Asc -> Desc -> Reset
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      // Toggle direction if same field
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        // Reset
+        setSortField(null);
+        setSortDirection(null);
+      } else {
+        setSortDirection("asc");
+      }
     } else {
-      // New field, default to desc (highest first)
       setSortField(field);
-      setSortDirection("desc");
+      setSortDirection("asc");
     }
   };
 
-  // Filter and sort assets
-  const sortedAssets = useMemo(() => {
-    const filtered = selectedCategory
+  // Filter, search, and sort assets - then apply bookmarks on top
+  const processedAssets = useMemo(() => {
+    // Step 1: Filter by category
+    let filtered = selectedCategory
       ? ASSETS.filter(a => a.category === selectedCategory)
-      : ASSETS;
+      : [...ASSETS];
 
-    return [...filtered].sort((a, b) => {
-      const dataA = generateMarketData(a);
-      const dataB = generateMarketData(b);
+    // Step 2: Search (global - searches all data)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(a =>
+        a.name.toLowerCase().includes(query) ||
+        a.symbol.toLowerCase().includes(query) ||
+        a.category.toLowerCase().includes(query)
+      );
+    }
 
-      let comparison = 0;
+    // Step 3: Separate bookmarked and non-bookmarked
+    const bookmarked = filtered.filter(a => bookmarks.has(a.id));
+    const nonBookmarked = filtered.filter(a => !bookmarks.has(a.id));
 
-      switch (sortField) {
-        case "name":
-          comparison = a.name.localeCompare(b.name);
-          break;
-        case "price":
-          comparison = a.price - b.price;
-          break;
-        case "change":
-          comparison = a.change24h - b.change24h;
-          break;
-        case "marketCap":
-          comparison = a.marketCap - b.marketCap;
-          break;
-        case "volume":
-          comparison = dataA.volume24h - dataB.volume24h;
-          break;
-        case "oi":
-          comparison = dataA.openInterest - dataB.openInterest;
-          break;
-        case "funding":
-          comparison = dataA.fundingRate - dataB.fundingRate;
-          break;
-        case "longRatio":
-          comparison = dataA.longRatio - dataB.longRatio;
-          break;
-        default:
-          comparison = 0;
-      }
+    // Step 4: Sort each group
+    const sortItems = (items: Asset[]) => {
+      if (!sortField || !sortDirection) return items;
 
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-  }, [selectedCategory, sortField, sortDirection]);
+      return [...items].sort((a, b) => {
+        const dataA = generateMarketData(a);
+        const dataB = generateMarketData(b);
+
+        let comparison = 0;
+
+        switch (sortField) {
+          case "name":
+            comparison = a.name.localeCompare(b.name);
+            break;
+          case "price":
+            comparison = a.price - b.price;
+            break;
+          case "change":
+            comparison = a.change24h - b.change24h;
+            break;
+          case "marketCap":
+            comparison = a.marketCap - b.marketCap;
+            break;
+          case "volume":
+            comparison = dataA.volume24h - dataB.volume24h;
+            break;
+          case "oi":
+            comparison = dataA.openInterest - dataB.openInterest;
+            break;
+          case "funding":
+            comparison = dataA.fundingRate - dataB.fundingRate;
+            break;
+          case "longRatio":
+            comparison = dataA.longRatio - dataB.longRatio;
+            break;
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    };
+
+    // Sort both groups and combine (bookmarked first)
+    return [...sortItems(bookmarked), ...sortItems(nonBookmarked)];
+  }, [selectedCategory, sortField, sortDirection, searchQuery, bookmarks]);
+
+  // Pagination
+  const totalPages = Math.ceil(processedAssets.length / ITEMS_PER_PAGE);
+  const paginatedAssets = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return processedAssets.slice(start, start + ITEMS_PER_PAGE);
+  }, [processedAssets, currentPage]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery, sortField, sortDirection]);
+
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <main className="pt-20 px-4 md:px-6 pb-8 max-w-7xl mx-auto">
+      <main className="pt-20 px-4 md:px-6 pb-8 max-w-7xl mx-auto flex-1 w-full">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text-primary mb-2">Markets</h1>
@@ -222,7 +392,7 @@ export default function MarketsPage() {
         </div>
 
         {/* Category Filter */}
-        <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-2">
+        <div className="flex items-center gap-3 mb-4 overflow-x-auto pb-2">
           <button
             onClick={() => setSelectedCategory(null)}
             className={cn(
@@ -251,199 +421,337 @@ export default function MarketsPage() {
           ))}
         </div>
 
-        {/* Info about sorting */}
-        <div className="flex items-center gap-2 mb-4 text-xs text-text-muted">
-          <ArrowUpDown className="w-3 h-3" />
-          <span>Click column headers to sort</span>
+        {/* Search Input */}
+        <div className="relative mb-6">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, symbol, or category..."
+            className="w-full pl-12 pr-12 py-3 bg-card border border-border rounded-xl text-text-primary placeholder:text-text-muted focus:outline-none focus:border-gold/50 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
-        {/* Markets Table */}
-        <div className="bg-card border border-border rounded-xl overflow-hidden overflow-x-auto">
-          <table className="w-full min-w-[1000px]">
-            <thead>
-              <tr className="border-b border-border text-left text-xs text-text-muted uppercase tracking-wider">
-                <SortableHeader
-                  field="name"
-                  label="Market"
-                  currentSort={sortField}
-                  currentDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  field="price"
-                  label="Price"
-                  currentSort={sortField}
-                  currentDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  field="change"
-                  label="24h Change"
-                  currentSort={sortField}
-                  currentDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  field="marketCap"
-                  label="Market Cap"
-                  currentSort={sortField}
-                  currentDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  field="volume"
-                  label="24h Volume"
-                  currentSort={sortField}
-                  currentDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  field="oi"
-                  label="Open Interest"
-                  currentSort={sortField}
-                  currentDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  field="funding"
-                  label="Funding"
-                  currentSort={sortField}
-                  currentDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  field="longRatio"
-                  label="Long/Short"
-                  currentSort={sortField}
-                  currentDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <th className="px-6 py-4 font-medium"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {sortedAssets.map((asset) => {
-                const marketData = generateMarketData(asset);
-                return (
-                  <tr key={asset.id} className="hover:bg-card-hover transition-colors">
-                    {/* Market */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center text-sm font-bold text-gold border border-border overflow-hidden">
-                          {asset.logo ? (
-                            <img
-                              src={asset.logo}
-                              alt={asset.symbol}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = "none";
-                              }}
-                            />
-                          ) : (
-                            asset.symbol.slice(0, 2)
-                          )}
+        {/* Info Row */}
+        <div className="flex items-center justify-between mb-4 text-xs text-text-muted">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1">
+              <ArrowUpDown className="w-3 h-3" />
+              Click headers to sort (Asc → Desc → Reset)
+            </span>
+            <span>
+              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, processedAssets.length)} of {processedAssets.length}
+            </span>
+          </div>
+          {bookmarks.size > 0 && (
+            <span className="flex items-center gap-1 text-gold">
+              <Bookmark className="w-3 h-3 fill-current" />
+              {bookmarks.size} bookmarked
+            </span>
+          )}
+        </div>
+
+        {/* Markets Table - Responsive */}
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full table-auto">
+              <thead>
+                <tr className="border-b border-border text-left text-xs text-text-muted uppercase tracking-wider">
+                  <SortableHeader
+                    field="name"
+                    label="Market"
+                    currentSort={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    className="min-w-[180px]"
+                  />
+                  <SortableHeader
+                    field="price"
+                    label="Price"
+                    currentSort={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    className="min-w-[100px]"
+                  />
+                  <SortableHeader
+                    field="change"
+                    label="24h"
+                    currentSort={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    className="min-w-[80px]"
+                  />
+                  <SortableHeader
+                    field="marketCap"
+                    label="MCap"
+                    currentSort={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    className="min-w-[90px]"
+                  />
+                  <SortableHeader
+                    field="volume"
+                    label="Volume"
+                    currentSort={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    className="min-w-[100px] hidden lg:table-cell"
+                  />
+                  <SortableHeader
+                    field="oi"
+                    label="OI"
+                    currentSort={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    className="min-w-[100px] hidden xl:table-cell"
+                  />
+                  <SortableHeader
+                    field="funding"
+                    label="Funding"
+                    currentSort={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    className="min-w-[80px] hidden xl:table-cell"
+                  />
+                  <SortableHeader
+                    field="longRatio"
+                    label="L/S"
+                    currentSort={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    className="min-w-[100px] hidden md:table-cell"
+                  />
+                  <th className="px-3 py-3 font-medium min-w-[80px]"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {paginatedAssets.map((asset) => {
+                  const marketData = generateMarketData(asset);
+                  const isBookmarked = bookmarks.has(asset.id);
+                  return (
+                    <tr key={asset.id} className={cn(
+                      "hover:bg-card-hover transition-colors",
+                      isBookmarked && "bg-gold/5"
+                    )}>
+                      {/* Market + Bookmark */}
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center text-xs font-bold text-gold border border-border overflow-hidden flex-shrink-0">
+                            {asset.logo ? (
+                              <img
+                                src={asset.logo}
+                                alt={asset.symbol}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              asset.symbol.slice(0, 2)
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-text-primary text-sm truncate">{asset.name}</p>
+                            <p className="text-xs text-text-muted">{asset.symbol}</p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toggleBookmark(asset.id);
+                            }}
+                            className={cn(
+                              "p-1 rounded transition-colors flex-shrink-0",
+                              isBookmarked
+                                ? "text-gold"
+                                : "text-text-muted hover:text-gold opacity-50 hover:opacity-100"
+                            )}
+                          >
+                            <Bookmark className={cn("w-4 h-4", isBookmarked && "fill-current")} />
+                          </button>
                         </div>
-                        <div>
-                          <p className="font-semibold text-text-primary">{asset.name}</p>
-                          <p className="text-xs text-text-muted">{asset.symbol}</p>
-                        </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Price */}
-                    <td className="px-6 py-4">
-                      <span className="font-semibold text-text-primary">
-                        {formatUSD(asset.price)}
-                      </span>
-                    </td>
-
-                    {/* 24h Change */}
-                    <td className="px-6 py-4">
-                      <span
-                        className={cn(
-                          "flex items-center gap-1 font-medium",
-                          asset.change24h >= 0 ? "text-success" : "text-danger"
-                        )}
-                      >
-                        {asset.change24h >= 0 ? (
-                          <TrendingUp className="w-4 h-4" />
-                        ) : (
-                          <TrendingDown className="w-4 h-4" />
-                        )}
-                        {formatPercent(asset.change24h)}
-                      </span>
-                    </td>
-
-                    {/* Market Cap */}
-                    <td className="px-6 py-4">
-                      <span className="text-text-primary font-medium">
-                        {formatMarketCap(asset.marketCap)}
-                      </span>
-                    </td>
-
-                    {/* Volume */}
-                    <td className="px-6 py-4">
-                      <span className="text-text-primary">
-                        {formatUSD(marketData.volume24h)}
-                      </span>
-                    </td>
-
-                    {/* Open Interest */}
-                    <td className="px-6 py-4">
-                      <span className="flex items-center gap-1 text-text-primary">
-                        {formatUSD(marketData.openInterest)}
-                        <Lock className="w-3 h-3 text-gold" />
-                      </span>
-                    </td>
-
-                    {/* Funding Rate */}
-                    <td className="px-6 py-4">
-                      <span
-                        className={cn(
-                          "font-medium",
-                          marketData.fundingRate >= 0 ? "text-success" : "text-danger"
-                        )}
-                      >
-                        {marketData.fundingRate >= 0 ? "+" : ""}
-                        {(marketData.fundingRate * 100).toFixed(4)}%
-                      </span>
-                    </td>
-
-                    {/* Long/Short */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 h-2 bg-background rounded-full overflow-hidden flex">
-                          <div
-                            className="h-full bg-success"
-                            style={{ width: `${marketData.longRatio}%` }}
-                          />
-                          <div
-                            className="h-full bg-danger"
-                            style={{ width: `${100 - marketData.longRatio}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-text-muted">
-                          {marketData.longRatio.toFixed(0)}%
+                      {/* Price */}
+                      <td className="px-3 py-3">
+                        <span className="font-semibold text-text-primary text-sm">
+                          {formatUSD(asset.price)}
                         </span>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Trade Button */}
-                    <td className="px-6 py-4">
-                      <Link
-                        href={`/trade?asset=${asset.id}`}
-                        className="flex items-center gap-1 px-4 py-2 bg-gold/20 text-gold rounded-lg font-medium text-sm hover:bg-gold/30 transition-colors"
-                      >
-                        Trade
-                        <ArrowRight className="w-4 h-4" />
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      {/* 24h Change */}
+                      <td className="px-3 py-3">
+                        <span
+                          className={cn(
+                            "flex items-center gap-1 font-medium text-sm",
+                            asset.change24h >= 0 ? "text-success" : "text-danger"
+                          )}
+                        >
+                          {asset.change24h >= 0 ? (
+                            <TrendingUp className="w-3 h-3" />
+                          ) : (
+                            <TrendingDown className="w-3 h-3" />
+                          )}
+                          {formatPercent(asset.change24h)}
+                        </span>
+                      </td>
+
+                      {/* Market Cap */}
+                      <td className="px-3 py-3">
+                        <span className="text-text-primary font-medium text-sm">
+                          {formatMarketCap(asset.marketCap)}
+                        </span>
+                      </td>
+
+                      {/* Volume */}
+                      <td className="px-3 py-3 hidden lg:table-cell">
+                        <span className="text-text-primary text-sm">
+                          {formatUSD(marketData.volume24h)}
+                        </span>
+                      </td>
+
+                      {/* Open Interest */}
+                      <td className="px-3 py-3 hidden xl:table-cell">
+                        <span className="flex items-center gap-1 text-text-primary text-sm">
+                          {formatUSD(marketData.openInterest)}
+                          <Lock className="w-3 h-3 text-gold" />
+                        </span>
+                      </td>
+
+                      {/* Funding Rate */}
+                      <td className="px-3 py-3 hidden xl:table-cell">
+                        <span
+                          className={cn(
+                            "font-medium text-sm",
+                            marketData.fundingRate >= 0 ? "text-success" : "text-danger"
+                          )}
+                        >
+                          {marketData.fundingRate >= 0 ? "+" : ""}
+                          {(marketData.fundingRate * 100).toFixed(3)}%
+                        </span>
+                      </td>
+
+                      {/* Long/Short */}
+                      <td className="px-3 py-3 hidden md:table-cell">
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-1.5 bg-background rounded-full overflow-hidden flex">
+                            <div
+                              className="h-full bg-success"
+                              style={{ width: `${marketData.longRatio}%` }}
+                            />
+                            <div
+                              className="h-full bg-danger"
+                              style={{ width: `${100 - marketData.longRatio}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-text-muted">
+                            {marketData.longRatio.toFixed(0)}%
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Trade Button */}
+                      <td className="px-3 py-3">
+                        <Link
+                          href={`/trade?asset=${asset.id}`}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-gold/20 text-gold rounded-lg font-medium text-xs hover:bg-gold/30 transition-colors"
+                        >
+                          Trade
+                          <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-4 border-t border-border">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className={cn(
+                  "flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  currentPage === 1
+                    ? "text-text-muted cursor-not-allowed"
+                    : "text-text-primary hover:bg-card-hover"
+                )}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </button>
+
+              <div className="flex items-center gap-2">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={cn(
+                        "w-8 h-8 rounded-lg text-sm font-medium transition-colors",
+                        currentPage === pageNum
+                          ? "bg-gold text-background"
+                          : "text-text-muted hover:text-text-primary hover:bg-card-hover"
+                      )}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className={cn(
+                  "flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  currentPage === totalPages
+                    ? "text-text-muted cursor-not-allowed"
+                    : "text-text-primary hover:bg-card-hover"
+                )}
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* No Results */}
+        {paginatedAssets.length === 0 && (
+          <div className="text-center py-12">
+            <Search className="w-12 h-12 text-text-muted mx-auto mb-4" />
+            <p className="text-text-muted">No markets found matching your search.</p>
+            <button
+              onClick={clearSearch}
+              className="mt-4 px-4 py-2 bg-gold/20 text-gold rounded-lg font-medium text-sm hover:bg-gold/30 transition-colors"
+            >
+              Clear Search
+            </button>
+          </div>
+        )}
 
         {/* Encrypted Badge */}
         <div className="mt-6 flex items-center justify-center gap-2 text-gold">
@@ -451,6 +759,9 @@ export default function MarketsPage() {
           <span className="text-sm">All positions are encrypted with FHE</span>
         </div>
       </main>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
