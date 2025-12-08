@@ -165,7 +165,7 @@ function Footer() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-text-muted">
-            &copy; 2024 Shadow Protocol. Built for Zama Builder Track.
+            &copy; 2025 Shadow Protocol. Built for Zama Builder Track.
           </p>
 
           {/* Social Links */}
@@ -508,11 +508,11 @@ export default function MarketsPage() {
                   />
                   <SortableHeader
                     field="oi"
-                    label="OI"
+                    label="Open Interest"
                     currentSort={sortField}
                     currentDirection={sortDirection}
                     onSort={handleSort}
-                    className="min-w-[100px] hidden xl:table-cell"
+                    className="min-w-[120px] hidden xl:table-cell"
                   />
                   <SortableHeader
                     field="funding"
@@ -540,7 +540,7 @@ export default function MarketsPage() {
                   return (
                     <tr key={asset.id} className={cn(
                       "hover:bg-card-hover transition-colors",
-                      isBookmarked && "bg-gold/5"
+                      isBookmarked && "bg-gold/10 border-l-2 border-l-gold"
                     )}>
                       {/* Market + Bookmark */}
                       <td className="px-3 py-3">

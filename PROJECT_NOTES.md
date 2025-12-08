@@ -1,6 +1,31 @@
 # Shadow Protocol - Proje Notları
 
-> Bu dosya Claude Code ile çalışırken projenin durumunu hızlıca anlamak için kullanılır.
+---
+## ⚠️ ÖNEMLİ UYARI - COMMIT KURALLARI ⚠️
+
+**SAKIN AMA SAKIN COMMİT MESAJLARINDA:**
+- "Claude" kelimesi KULLANMA
+- "AI" veya "AI-generated" YAZMA
+- "Co-Authored-By: Claude" EKLEME
+- "Generated with Claude Code" EKLEME
+- Herhangi bir AI referansı VERME
+
+**DOĞRU COMMIT ÖRNEĞİ:**
+```
+feat(markets): add pagination and search functionality
+```
+
+**YANLIŞ COMMIT ÖRNEĞİ:**
+```
+feat: add feature
+
+🤖 Generated with Claude Code
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+---
+
+> Bu dosya projenin durumunu hızlıca anlamak için kullanılır.
 
 ## Proje Nedir?
 **Private Leveraged Pre-IPO Trading Platform** - Zama fhEVM (Fully Homomorphic Encryption) ile şifreli pozisyon açma ve trading yapan bir DeFi protokolü.
@@ -87,10 +112,15 @@ import { ZamaEthereumConfig } from "@fhevm/solidity/config/ZamaConfig.sol";
 4. [ ] User decryption flow ekle
 5. [ ] Temel testler yaz
 
+### Mekanikler (Detaylandırılacak):
+- [ ] Fee mekanizması - detaylı açıklama ve implementasyon
+- [ ] Oracle mekanizması - price feed, update logic
+
 ### Nice to Have:
 - [ ] Trade Card / Share Card komponenti
 - [ ] Position Details Modal
 - [ ] Demo video hazırla
+- [ ] Footer'ı tüm sayfalara ekle
 
 ## Hızlı Komutlar
 

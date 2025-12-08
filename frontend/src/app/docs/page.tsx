@@ -160,6 +160,88 @@ const FAQ_SECTIONS: FAQSection[] = [
     ],
   },
   {
+    title: "Synthetic Pricing & Valuation",
+    icon: <Calculator className="w-5 h-5" />,
+    items: [
+      {
+        question: "How is the synthetic share price calculated?",
+        answer: (
+          <div className="space-y-4">
+            <p>
+              Shadow Protocol creates <strong>synthetic shares</strong> for Pre-IPO companies.
+              Since these companies are not publicly traded, we use their <strong>latest funding round valuation</strong>
+              to determine the price.
+            </p>
+            <div className="bg-card-hover border border-gold/30 rounded-lg p-4">
+              <h4 className="font-semibold text-gold mb-3 flex items-center gap-2">
+                <Calculator className="w-4 h-4" /> Pricing Formula
+              </h4>
+              <div className="font-mono text-sm bg-background rounded p-3">
+                <p className="text-text-muted">// We assume 1 Billion synthetic shares per company</p>
+                <p className="mt-2">Synthetic Share Price = Company Valuation / 1,000,000,000</p>
+                <p className="mt-2 text-text-muted">// Example: SpaceX</p>
+                <p>$350B valuation / 1B shares = <span className="text-success">$350 per share</span></p>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4 mt-4">
+              <div className="bg-card-hover rounded-lg p-4">
+                <h4 className="font-medium mb-2">Why 1 Billion shares?</h4>
+                <ul className="text-sm space-y-1 text-text-muted">
+                  <li>• Makes math simple: $1B valuation = $1/share</li>
+                  <li>• Allows fractional trading for any budget</li>
+                  <li>• Consistent across all assets</li>
+                </ul>
+              </div>
+              <div className="bg-card-hover rounded-lg p-4">
+                <h4 className="font-medium mb-2">Price = Valuation</h4>
+                <ul className="text-sm space-y-1 text-text-muted">
+                  <li>• SpaceX: $350B → $350/share</li>
+                  <li>• OpenAI: $157B → $157/share</li>
+                  <li>• Stripe: $70B → $70/share</li>
+                </ul>
+              </div>
+            </div>
+            <div className="bg-gold/10 border border-gold/30 rounded-lg p-3 flex items-center gap-3 mt-4">
+              <Info className="w-5 h-5 text-gold flex-shrink-0" />
+              <p className="text-sm">
+                <strong>Note:</strong> These are synthetic prices based on private market valuations,
+                not actual stock prices. Valuations are updated based on latest funding rounds and secondary market data.
+              </p>
+            </div>
+          </div>
+        ),
+      },
+      {
+        question: "Where do valuations come from?",
+        answer: (
+          <div className="space-y-4">
+            <p>
+              Company valuations are sourced from multiple data points:
+            </p>
+            <div className="space-y-3">
+              {[
+                { icon: <DollarSign className="w-4 h-4" />, title: "Funding Rounds", desc: "Latest Series A/B/C/D valuations from official announcements" },
+                { icon: <BarChart3 className="w-4 h-4" />, title: "Secondary Markets", desc: "Prices from platforms like Forge, EquityZen, Hiive" },
+                { icon: <TrendingUp className="w-4 h-4" />, title: "Tender Offers", desc: "Internal employee stock sale prices" },
+                { icon: <Info className="w-4 h-4" />, title: "Research Reports", desc: "Analyst estimates from CB Insights, PitchBook" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-3 bg-card-hover rounded-lg p-3">
+                  <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center text-gold flex-shrink-0">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <p className="font-medium">{item.title}</p>
+                    <p className="text-sm text-text-muted">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
     title: "Oracle & Price Mechanism",
     icon: <BarChart3 className="w-5 h-5" />,
     items: [
